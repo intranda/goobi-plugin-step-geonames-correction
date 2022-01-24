@@ -16,7 +16,7 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
  * 
  -->
-<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:o="http://omnifaces.org/ui" xmlns:of="http://omnifaces.org/functions" template="/uii/template/template.html" xmlns:x="http://myfaces.apache.org/tomahawk" xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:jsf="http://xmlns.jcp.org/jsf" xmlns:o="http://omnifaces.org/ui" xmlns:of="http://omnifaces.org/functions" template="/uii/template/template.html" xmlns:x="http://myfaces.apache.org/tomahawk" xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites">
 
     <ui:param name="myPageTitle" value="#{msgs.plugin}: #{msgs[('plugin_').concat(AktuelleSchritteForm.myPlugin.title)]}" />
 
@@ -40,8 +40,16 @@
     </ui:define>
 
     <ui:define name="content">
-    
-        <h:form id="myform">
+        <link rel="stylesheet" href="leaflet/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="/>
+        <style>
+            #geonamesMap {
+                height: 90vh;
+            }
+            #genonamesMapContainer {
+                position: sticky;
+                top: 5vh;
+            }
+        </style>
             <div class="box box-color lightgrey box-bordered">
                 <div class="box-title">
                     <h3>
@@ -69,11 +77,56 @@
                 <div class="box-content">
 					
 					<h:panelGroup id="actionform" styleClass="col-sm-12">
-						<div class="row">
-							<h:form>
-								hello step plugin: #{AktuelleSchritteForm.myPlugin.value}
-							</h:form>
-						</div>
+					      <div class="row">
+                            <div class="col-md-6" jsf:id="tableCol">
+					   <h:form>
+                                <table jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}" class="table" id="geonamesTable">
+                                    <thead>
+                                    <tr><th>Begriff</th><th>Geonames Name</th><th>Phrase</th><th>lat</th><th>lon</th><th>Aktionen</th></tr>
+                                    </thead>
+                                    <tbody>
+                                    <ui:repeat var="pageName" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap.keySet()}">
+                                        <ui:fragment rendered="#{not empty AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
+                                            <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
+                                                <tr onclick="zoomToRow(event)">
+                                                    <td>#{tag.doc_vocab}</td>
+                                                    <td class="geonames-vocab">#{tag.geonames_vocab}</td>
+                                                    <td>#{tag.text_snippet}</td>
+                                                    <td class="lat">#{tag.lat}</td>
+                                                    <td class="lng">#{tag.lng}</td>
+                                                    <td>
+                                                        <div class="btn-group" role="group" aria-label="actions">
+                                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.doEditEntry}" class="btn fa fa-pencil" aria-label="edit">
+                                                                <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
+                                                                <f:setPropertyActionListener value="edit" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
+                                                                <f:setPropertyActionListener value="#{tag.doc_vocab}" target="#{AktuelleSchritteForm.myPlugin.searchString}" />
+                                                                <f:ajax render="@form" />
+                                                            </button>
+                                                            <button class="btn fa fa-trash" aria-label="delete"></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>                                                
+                                            </ui:repeat>
+                                        </ui:fragment>
+                                    </ui:repeat>
+                                    </tbody>
+                                </table>
+                                <div jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'edit'}">
+                                    <h4>Bearbeiten: #{AktuelleSchritteForm.myPlugin.searchString}</h4>
+                                    <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
+                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.doEditEntry}">BACK
+                                        <f:setPropertyActionListener value="all" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
+                                        <f:ajax render="@form" />
+                                    </button>
+                                </div>
+						</h:form>
+                            </div>
+                            <div class="col-md-6" id="mapCol">
+                                <div id="genonamesMapContainer">
+                                    <div id="geonamesMap"></div>
+                                </div>
+                            </div>
+                          </div>
 					</h:panelGroup>
 					
                 </div>
@@ -98,8 +151,18 @@
 
             </div>
 
-        </h:form>
 
+        <script src="leaflet/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="></script>
+        <script src="geonames_map.js"></script>
+        <script>
+        	drawGeonamesMap();
+        	document.onclick= zoomToAll;
+        	window.addEventListener("load", (event) => {
+        		console.log("onload")
+        		var height = document.querySelector('#tableCol').offsetHeight;
+        		document.querySelector('#mapCol').style.height = height + "px";
+        	})
+        </script>
     </ui:define>
 
 </ui:composition>

@@ -60,6 +60,7 @@ import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
@@ -84,6 +85,15 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
 
     @Getter
     private Map<String, List<NEREntry>> nerEntryMap;
+    @Getter
+    @Setter
+    private String editMode = "all";
+    @Getter
+    @Setter
+    private NEREntry editEntry;
+    @Getter
+    @Setter
+    private String searchString;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -183,6 +193,11 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                 .asString();
         JsonNode respJson = new ObjectMapper().readTree(geonamesJSON);
         return respJson;
+    }
+
+    public String doEditEntry() {
+        System.out.println(this.editMode + " " + this.searchString + " " + this.editEntry);
+        return "";
     }
 
     @Override
