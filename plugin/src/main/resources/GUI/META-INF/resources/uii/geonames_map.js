@@ -21,6 +21,7 @@ function zoomToAll(e) {
 			&& e.clientY > mapBounds.top && e.clientY < mapBounds.bottom) {
 			return;
 		}
+		clearHighlight();
 		markerLayerGroup.clearLayers();
 	}
 	var points = getFeaturesFromTable();
@@ -30,23 +31,54 @@ function zoomToAll(e) {
 function zoomToPoints(points) {
 	var view = getViewAroundFeatures(points.map(p => p.latLng));
 	goobiGeonamesMap.setView(view.center, view.zoom);
-	points.forEach(p => L.marker(p.latLng, {title: p.title}).addTo(markerLayerGroup));
+	points.forEach(p => L.marker(p.latLng, p).addTo(markerLayerGroup).on("click", highlightRow));
+}
+
+function clearHighlight() {
+	for(let row of document.querySelectorAll('tbody tr')) {
+		row.classList.remove("highlight");
+	}
+}
+
+function highlightRow(event) {
+	var sourceRow = event.sourceTarget.options.sourceRow;
+	if(sourceRow) {
+		clearHighlight();
+		sourceRow.classList.add("highlight");
+		if(!elementInViewport(sourceRow)) {
+			sourceRow.scrollIntoView();
+		}
+	}
+}
+
+function elementInViewport(element) {
+	var bounding = element.getBoundingClientRect();
+	return bounding.top >= 0 
+		&& bounding.left >= 0 
+		&& bounding.right <= window.innerWidth 
+		&& bounding.bottom <= window.innerHeight;
 }
 
 function zoomToRow(event) {
-	console.log(event)
 	var row = event.target;
+	console.log(event.target.id)
+	if(event.target.id.indexOf("deleteButton") >= 0) {
+		return;
+	}
 	while(row && row.localName != "tr") {
 		row = row.parentElement;
 	}
 	if(!row) {
 		return
 	}
+	clearHighlight();
+	row.classList.add("highlight")
+	var title = row.querySelector('td.geonames-vocab').innerText;
 	var latStr = row.querySelector('td.lat').innerText;
 	var lngStr = row.querySelector('td.lng').innerText
 	if(latStr && lngStr) {
 		markerLayerGroup.clearLayers();
-		var points = [{latLng: L.latLng(parseFloat(latStr), parseFloat(lngStr))}];
+		var points = [{latLng: L.latLng(parseFloat(latStr), parseFloat(lngStr)), title: title, sourceRow: row}];
 		zoomToPoints(points);
 	}
 	event.zoomedToRow = true;
@@ -55,13 +87,15 @@ function zoomToRow(event) {
 function getFeaturesFromTable() {
 	var points = [];
 	var rows = document.querySelectorAll("#geonamesTable tbody tr");
-	//TODO: handle empty rows
+	if(rows.length == 0) {
+		rows = document.querySelectorAll("#searchResultsTable tbody tr");
+	}
 	for(let row of rows) {
 		var title = row.querySelector('td.geonames-vocab').innerText;
 		var latStr = row.querySelector('td.lat').innerText;
 		var lngStr = row.querySelector('td.lng').innerText;
 		if(latStr && lngStr) {
-			var point = {latLng: L.latLng(parseFloat(latStr), parseFloat(lngStr)), title: title};
+			var point = {latLng: L.latLng(parseFloat(latStr), parseFloat(lngStr)), title: title, sourceRow: row};
 			points.push(point);
 		}
 	}
@@ -83,7 +117,6 @@ getViewAroundFeatures = function(features, defaultZoom, zoomPadding) {
         }
     	let bounds = L.latLngBounds();
     	features.forEach(b => bounds.extend(b));
-    	console.log(bounds)
         let center = bounds.getCenter();
         let diameter = this.getDiameter(bounds);
         return {

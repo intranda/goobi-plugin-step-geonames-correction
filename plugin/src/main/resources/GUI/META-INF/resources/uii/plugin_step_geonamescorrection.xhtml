@@ -49,6 +49,9 @@
                 position: sticky;
                 top: 5vh;
             }
+            .table.table-hover tr.highlight > td {
+                background: #3dc1e2;
+            }
         </style>
             <div class="box box-color lightgrey box-bordered">
                 <div class="box-title">
@@ -80,7 +83,7 @@
 					      <div class="row">
                             <div class="col-md-6" jsf:id="tableCol">
 					   <h:form>
-                                <table jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}" class="table" id="geonamesTable">
+                                <table jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}" class="table table-hover" id="geonamesTable">
                                     <thead>
                                     <tr><th>Begriff</th><th>Geonames Name</th><th>Phrase</th><th>lat</th><th>lon</th><th>Aktionen</th></tr>
                                     </thead>
@@ -96,13 +99,15 @@
                                                     <td class="lng">#{tag.lng}</td>
                                                     <td>
                                                         <div class="btn-group" role="group" aria-label="actions">
-                                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.doEditEntry}" class="btn fa fa-pencil" aria-label="edit">
+                                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn fa fa-pencil" aria-label="edit">
                                                                 <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
                                                                 <f:setPropertyActionListener value="edit" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
                                                                 <f:setPropertyActionListener value="#{tag.doc_vocab}" target="#{AktuelleSchritteForm.myPlugin.searchString}" />
-                                                                <f:ajax render="@form" />
+                                                                <f:ajax render="@form" onevent="editOnEvent"/>
                                                             </button>
-                                                            <button class="btn fa fa-trash" aria-label="delete"></button>
+                                                            <button jsf:id="deleteButton" jsf:action="#{AktuelleSchritteForm.myPlugin.removeResult(tag)}" class="btn fa fa-trash" aria-label="delete">
+                                                                <f:ajax render="@form" onevent="deleteOnEvent" />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>                                                
@@ -113,11 +118,36 @@
                                 </table>
                                 <div jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'edit'}">
                                     <h4>Bearbeiten: #{AktuelleSchritteForm.myPlugin.searchString}</h4>
-                                    <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
-                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.doEditEntry}">BACK
-                                        <f:setPropertyActionListener value="all" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
-                                        <f:ajax render="@form" />
+                                    <div class="form-group">
+                                        <label>Suchbegriff</label>
+                                        <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
+                                    </div>
+                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn btn-default">Suche
+                                        <f:ajax execute="@form" render="@form"/>
                                     </button>
+                                    <hr />
+                                    <table class="table table-hover" id="searchResultsTable">
+                                    <thead>
+                                    <tr><th>Begriff</th><th>Geonames Name</th><th>Phrase</th><th>lat</th><th>lon</th><th>Aktionen</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.searchResults}">
+                                            <tr onclick="zoomToRow(event)">
+                                                <td>#{tag.doc_vocab}</td>
+                                                <td class="geonames-vocab">#{tag.geonames_vocab}</td>
+                                                <td>#{tag.text_snippet}</td>
+                                                <td class="lat">#{tag.lat}</td>
+                                                <td class="lng">#{tag.lng}</td>
+                                                <td style="min-width: 85px;">
+                                                    <div class="btn-group" role="group" aria-label="actions">
+                                                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResult(tag)}" class="btn fa fa-check"></button>
+                                                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResultForAll(tag)}" class="btn fa fa-list"></button>
+                                                    </div>
+                                                </td>
+                                            </tr>                                                
+                                        </ui:repeat>
+                                    </tbody>
+                                </table>
                                 </div>
 						</h:form>
                             </div>
@@ -158,10 +188,25 @@
         	drawGeonamesMap();
         	document.onclick= zoomToAll;
         	window.addEventListener("load", (event) => {
-        		console.log("onload")
+        		fixHeights();
+        	})
+        	function fixHeights() {
         		var height = document.querySelector('#tableCol').offsetHeight;
         		document.querySelector('#mapCol').style.height = height + "px";
-        	})
+        	}
+        	function deleteOnEvent(event) {
+        		if(event.status == "success") {
+        			fixHeights();
+        			zoomToAll();
+        		}
+        	}
+        	function editOnEvent(event) {
+        		if(event.status == "success") {
+        			fixHeights();
+        			zoomToAll();
+        			document.querySelector('#main-content').scrollIntoView();
+        		}
+        	}
         </script>
     </ui:define>
 

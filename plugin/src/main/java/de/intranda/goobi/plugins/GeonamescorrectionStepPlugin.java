@@ -1,6 +1,8 @@
 package de.intranda.goobi.plugins;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -94,6 +97,8 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
     @Getter
     @Setter
     private String searchString;
+    @Getter
+    private List<NEREntry> searchResults;
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -138,13 +143,14 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         return nerEntryMap;
     }
 
-    private List<NEREntry> readNEREntriesFromAltoFile(Path p, int position, String title, String id) throws JDOMException, IOException {
+    private List<NEREntry> readNEREntriesFromAltoFile(Path p, int position, String title, String pageName) throws JDOMException, IOException {
         List<NEREntry> foundEntries = new ArrayList<>();
         SAXBuilder sax = new SAXBuilder();
         Document doc = sax.build(p.toFile());
         List<Element> tags = tagXpath.evaluate(doc);
         for (Element tag : tags) {
             if ("LOCATION".equals(tag.getAttributeValue("TYPE"))) {
+                String id = tag.getAttributeValue("ID");
                 String doc_vocab = tag.getAttributeValue("LABEL");
                 String text_snippet = extractTextSnippet(doc, tag);
                 String geonames_uri = tag.getAttributeValue("URI");
@@ -159,9 +165,8 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                     lat = geonamesJson.get("lat").asText();
                     lng = geonamesJson.get("lng").asText();
                 }
-                String verification = "UNVERIFIED";
-                NEREntry entry = new NEREntry(id, title, doc_vocab, text_snippet, position, geonames_uri,
-                        geonames_feature_code, geonames_vocab, lat, lng, verification, 0);
+                NEREntry entry = new NEREntry(id, pageName, title, doc_vocab, text_snippet, geonames_uri,
+                        geonames_feature_code, geonames_vocab, lat, lng, false);
                 foundEntries.add(entry);
             }
         }
@@ -195,9 +200,77 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         return respJson;
     }
 
-    public String doEditEntry() {
-        System.out.println(this.editMode + " " + this.searchString + " " + this.editEntry);
+    public String searchGeonames() throws URISyntaxException, IOException, InterruptedException {
+        JsonNode results = requestGeonamesJson(searchString, geonamesAccount);
+        this.searchResults = new ArrayList<NEREntry>();
+
+        for (JsonNode geonamesJson : results) {
+            String geonames_uri = geonamesJson.get("geonameId").asText();
+            String geonames_vocab = geonamesJson.get("name").asText();
+            String geonames_feature_code = geonamesJson.get("fcode").asText();
+            String lat = geonamesJson.get("lat").asText();
+            String lng = geonamesJson.get("lng").asText();
+
+            searchResults.add(new NEREntry(editEntry.getID(), editEntry.getPageName(), editEntry.getTitle(), editEntry.getDoc_vocab(),
+                    editEntry.getText_snippet(),
+                    geonames_uri, geonames_feature_code, geonames_vocab, lat, lng, false));
+        }
         return "";
+    }
+
+    public void acceptResult(NEREntry result) {
+        this.editMode = "all";
+        for (String pageName : this.nerEntryMap.keySet()) {
+            if (pageName.equals(result.getPageName())) {
+                List<NEREntry> allEntries = nerEntryMap.get(pageName);
+                applyResultToNEREntryList(result, allEntries, entry -> entry.getID().equals(result.getID()));
+            }
+        }
+    }
+
+    private void applyResultToNEREntryList(NEREntry result, List<NEREntry> allEntries, Predicate<? super NEREntry> filter) {
+        allEntries.stream()
+                .filter(filter)
+                .forEach(entry -> {
+                    entry.setGeonames_feature_code(result.getGeonames_feature_code());
+                    entry.setGeonames_uri(result.getGeonames_uri());
+                    entry.setGeonames_vocab(result.getGeonames_vocab());
+                    entry.setLat(result.getLat());
+                    entry.setLng(result.getLng());
+                    entry.setChanged(true);
+                });
+    }
+
+    public void acceptResultForAll(NEREntry result) {
+        this.editMode = "all";
+        this.nerEntryMap.values()
+                .stream()
+                .forEach(list -> applyResultToNEREntryList(result, list, entry -> entry.getDoc_vocab().equals(result.getDoc_vocab())));
+    }
+
+    public void removeResult(NEREntry result) {
+        for (String pageName : this.nerEntryMap.keySet()) {
+            if (pageName.equals(result.getPageName())) {
+                List<NEREntry> entryList = nerEntryMap.get(pageName);
+                entryList.removeIf(entry -> entry.getID().equals(result.getID()));
+            }
+        }
+    }
+
+    private JsonNode requestGeonamesJson(String searchTerm, String geonamesUser)
+            throws URISyntaxException, IOException, InterruptedException {
+        ObjectMapper mapper = new ObjectMapper();
+        String url = String.format("%s/searchJSON?q=%s&maxRows=100&username=%s", geonamesApiUrl,
+                URLEncoder.encode(searchTerm, "UTF-8"), geonamesUser);
+
+        String body = Request.Get(url)
+                .execute()
+                .returnContent()
+                .asString();
+
+        JsonNode root = mapper.readTree(body);
+        JsonNode results = root.get("geonames");
+        return results;
     }
 
     @Override
