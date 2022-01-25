@@ -1,11 +1,13 @@
 package de.intranda.goobi.plugins;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 
 /**
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +56,8 @@ import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 import org.jdom2.filter.Filters;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
 
@@ -254,6 +259,42 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                 List<NEREntry> entryList = nerEntryMap.get(pageName);
                 entryList.removeIf(entry -> entry.getID().equals(result.getID()));
             }
+        }
+    }
+
+    public void save() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
+        for (String pageName : this.nerEntryMap.keySet()) {
+            List<NEREntry> changedEntries = nerEntryMap.get(pageName)
+                    .stream()
+                    .filter(e -> e.isChanged())
+                    .collect(Collectors.toList());
+            if (!changedEntries.isEmpty()) {
+                saveChangedEntries(pageName, changedEntries);
+            }
+        }
+    }
+
+    private void saveChangedEntries(String pageName, List<NEREntry> changedEntries)
+            throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
+        String altoFolder = step.getProzess().getOcrAltoDirectory();
+        Path p = Paths.get(altoFolder, pageName);
+        SAXBuilder sax = new SAXBuilder();
+        Document doc = sax.build(p.toFile());
+        List<Element> tags = tagXpath.evaluate(doc);
+        for (Element tag : tags) {
+            if ("LOCATION".equals(tag.getAttributeValue("TYPE"))) {
+                String id = tag.getAttributeValue("ID");
+                Optional<NEREntry> optEntry = changedEntries.stream()
+                        .filter(e -> e.getID().equals(id))
+                        .findAny();
+                optEntry.ifPresent(entry -> {
+                    tag.setAttribute("URI", entry.getGeonames_uri());
+                });
+            }
+        }
+        XMLOutputter xmlOut = new XMLOutputter(Format.getPrettyFormat());
+        try (OutputStream out = Files.newOutputStream(p, StandardOpenOption.TRUNCATE_EXISTING)) {
+            xmlOut.output(doc, out);
         }
     }
 
