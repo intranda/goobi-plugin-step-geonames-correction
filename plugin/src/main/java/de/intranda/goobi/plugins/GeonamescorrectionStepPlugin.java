@@ -273,6 +273,15 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
 
     }
 
+    public void cancelEdit() {
+        this.editMode = "all";
+    }
+
+    public void saveAndExit() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
+        save();
+        finish();
+    }
+
     public void save() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
         for (String pageName : this.nerEntryMap.keySet()) {
             List<NEREntry> changedEntries = nerEntryMap.get(pageName)
