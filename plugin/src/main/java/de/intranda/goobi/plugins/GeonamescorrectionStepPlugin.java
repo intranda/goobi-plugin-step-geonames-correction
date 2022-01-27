@@ -30,10 +30,12 @@ import java.util.ArrayList;
  */
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,6 +106,7 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
     private String searchString;
     @Getter
     private List<NEREntry> searchResults;
+    private Map<String, Set<String>> pageToDeletedEntriesMap = new HashMap<>();
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -165,7 +168,6 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                 String lng = null;
                 if (geonames_uri != null) {
                     JsonNode geonamesJson = requestGeonames(geonames_uri);
-                    geonames_feature_code = geonamesJson.get("fcode").asText();
                     geonames_vocab = geonamesJson.get("name").asText();
                     lat = geonamesJson.get("lat").asText();
                     lng = geonamesJson.get("lng").asText();
@@ -210,7 +212,7 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         this.searchResults = new ArrayList<NEREntry>();
 
         for (JsonNode geonamesJson : results) {
-            String geonames_uri = geonamesJson.get("geonameId").asText();
+            String geonames_uri = "https://www.geonames.org/" + geonamesJson.get("geonameId").asText();
             String geonames_vocab = geonamesJson.get("name").asText();
             String geonames_feature_code = geonamesJson.get("fcode").asText();
             String lat = geonamesJson.get("lat").asText();
@@ -257,9 +259,18 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         for (String pageName : this.nerEntryMap.keySet()) {
             if (pageName.equals(result.getPageName())) {
                 List<NEREntry> entryList = nerEntryMap.get(pageName);
-                entryList.removeIf(entry -> entry.getID().equals(result.getID()));
+                boolean found = entryList.removeIf(entry -> entry.getID().equals(result.getID()));
+                if (found) {
+                    Set<String> deletedEntries = pageToDeletedEntriesMap.get(pageName);
+                    if (deletedEntries == null) {
+                        deletedEntries = new HashSet<String>();
+                        pageToDeletedEntriesMap.put(pageName, deletedEntries);
+                    }
+                    deletedEntries.add(result.getID());
+                }
             }
         }
+
     }
 
     public void save() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
@@ -268,13 +279,14 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                     .stream()
                     .filter(e -> e.isChanged())
                     .collect(Collectors.toList());
-            if (!changedEntries.isEmpty()) {
-                saveChangedEntries(pageName, changedEntries);
+            Set<String> deletedEntries = pageToDeletedEntriesMap.getOrDefault(pageName, new HashSet<>());
+            if (!changedEntries.isEmpty() || !deletedEntries.isEmpty()) {
+                saveChangedEntries(pageName, changedEntries, deletedEntries);
             }
         }
     }
 
-    private void saveChangedEntries(String pageName, List<NEREntry> changedEntries)
+    private void saveChangedEntries(String pageName, List<NEREntry> changedEntries, Set<String> deletedEntries)
             throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
         String altoFolder = step.getProzess().getOcrAltoDirectory();
         Path p = Paths.get(altoFolder, pageName);
@@ -285,11 +297,26 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
             if ("LOCATION".equals(tag.getAttributeValue("TYPE"))) {
                 String id = tag.getAttributeValue("ID");
                 Optional<NEREntry> optEntry = changedEntries.stream()
+                        .filter(e -> e.isChanged())
                         .filter(e -> e.getID().equals(id))
                         .findAny();
                 optEntry.ifPresent(entry -> {
                     tag.setAttribute("URI", entry.getGeonames_uri());
                 });
+                if (deletedEntries.contains(id)) {
+                    tag.getParent().removeContent(tag);
+                    List<Element> refEls =
+                            xFactory.compile(String.format("//alto:*[@TAGREFS='%s']", id), Filters.element(), null, altoNs).evaluate(doc);
+                    for (Element el : refEls) {
+                        String refs = el.getAttributeValue("TAGREFS");
+                        refs = refs.replace(id, "");
+                        if (refs.isEmpty()) {
+                            el.removeAttribute("TAGREFS");
+                        } else {
+                            el.setAttribute("TAGREFS", refs);
+                        }
+                    }
+                }
             }
         }
         XMLOutputter xmlOut = new XMLOutputter(Format.getPrettyFormat());

@@ -59,10 +59,14 @@
                         <i class="fa fa-puzzle-piece" />
                         <h:outputText id="id9a" value="#{AktuelleSchritteForm.myPlugin.step.titel}" />
                     </h3>
+                        <h:form>
                     <div class="actions">
                     	<h:commandLink id="id10" action="#{NavigationForm.Reload}" styleClass="btn btn-mini">
                             <i class="fa fa-refresh" />
                         </h:commandLink>
+                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.save}" class="btn btn-mini">
+                            <i class="fa fa-floppy-o"></i>
+                        </button>
                         <h:commandLink id="id11" action="#{AktuelleSchritteForm.SchrittDurchBenutzerAbschliessen}" styleClass="btn btn-mini" 
                         	rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}" title="#{msgs.task_leavePluginAndFinishTask}">
                             <i class="fa fa-check" />
@@ -75,6 +79,7 @@
                             <x:updateActionListener property="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
                         </h:commandLink>
                     </div>
+                        </h:form>
                 </div>
 
                 <div class="box-content">
@@ -85,7 +90,14 @@
 					   <h:form>
                                 <table jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}" class="table table-hover" id="geonamesTable">
                                     <thead>
-                                    <tr><th>Begriff</th><th>Geonames Name</th><th>Phrase</th><th>lat</th><th>lon</th><th>Aktionen</th></tr>
+                                    <tr>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
+                                        <th>#{msgs.actions}</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
                                     <ui:repeat var="pageName" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap.keySet()}">
@@ -117,18 +129,25 @@
                                     </tbody>
                                 </table>
                                 <div jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'edit'}">
-                                    <h4>Bearbeiten: #{AktuelleSchritteForm.myPlugin.searchString}</h4>
+                                    <h4>#{msgs.bearbeiten}: #{AktuelleSchritteForm.myPlugin.searchString}</h4>
                                     <div class="form-group">
-                                        <label>Suchbegriff</label>
+                                        <label>#{msgs.suchbegriff}</label>
                                         <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
                                     </div>
-                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn btn-default">Suche
+                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn btn-default">#{msgs.search}
                                         <f:ajax execute="@form" render="@form"/>
                                     </button>
                                     <hr />
                                     <table class="table table-hover" id="searchResultsTable">
                                     <thead>
-                                    <tr><th>Begriff</th><th>Geonames Name</th><th>Phrase</th><th>lat</th><th>lon</th><th>Aktionen</th></tr>
+                                    <tr>
+                                    <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
+                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
+                                        <th>#{msgs.actions}</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
                                         <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.searchResults}">
