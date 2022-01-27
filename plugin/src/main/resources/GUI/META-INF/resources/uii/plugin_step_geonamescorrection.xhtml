@@ -96,7 +96,7 @@
                                         <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
                                         <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
                                         <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
-                                        <th>#{msgs.actions}</th>
+                                        <th>#{msgs.auswahl}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -109,7 +109,7 @@
                                                     <td>#{tag.text_snippet}</td>
                                                     <td class="lat">#{tag.lat}</td>
                                                     <td class="lng">#{tag.lng}</td>
-                                                    <td>
+                                                    <td style="min-width: 85px;">
                                                         <div class="btn-group" role="group" aria-label="actions">
                                                             <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn fa fa-pencil" aria-label="edit">
                                                                 <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
