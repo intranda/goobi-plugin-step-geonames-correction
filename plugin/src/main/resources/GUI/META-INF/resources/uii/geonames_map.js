@@ -29,6 +29,9 @@ function zoomToAll(e) {
 }
 
 function zoomToPoints(points) {
+	if(!points || points.length == 0) {
+		return;
+	}
 	var view = getViewAroundFeatures(points.map(p => p.latLng));
 	goobiGeonamesMap.setView(view.center, view.zoom);
 	points.forEach(p => L.marker(p.latLng, p).addTo(markerLayerGroup).on("click", highlightRow));
