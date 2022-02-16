@@ -188,9 +188,9 @@
                                 <div id="genonamesMapContainer">
                                     <div id="geonamesMap"></div>
                                     <div id="saveActions">
+                                        <h:form>
                                         <div class="pull-right">
                                             <button jsf:action="#{AktuelleSchritteForm.myPlugin.cancel}" class="btn btn-lightgrey" style="margin-right: 5px;">
-                                                <i class="fa fa-floppy-o"></i>
                                                 #{msgs.cancel}
                                             </button>
                                             <button jsf:action="#{AktuelleSchritteForm.myPlugin.save}" class="btn btn-green" style="margin-right: 5px;">
@@ -202,6 +202,7 @@
                                                 #{msgs.plugin_codicological_saveAndExit}
                                             </button>
                                         </div>
+                                        </h:form>
                                         <div class="clearfix"></div>
                                     </div>
                                 </div>
