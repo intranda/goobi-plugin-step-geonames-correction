@@ -108,6 +108,8 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
     private List<NEREntry> searchResults;
     private Map<String, Set<String>> pageToDeletedEntriesMap = new HashMap<>();
 
+    private Map<String, JsonNode> geonamesCache = new HashMap<>();
+
     @Override
     public void initialize(Step step, String returnPath) {
         this.returnPath = returnPath;
@@ -199,11 +201,15 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         } else {
             return null;
         }
-        String geonamesJSON = Request.Get(String.format("%s/getJSON?geonameId=%s&username=%s", geonamesApiUrl, geonamesId, geonamesAccount))
-                .execute()
-                .returnContent()
-                .asString();
-        JsonNode respJson = new ObjectMapper().readTree(geonamesJSON);
+        JsonNode respJson = geonamesCache.get(geonamesId);
+        if (respJson == null) {
+            String geonamesJSON = Request.Get(String.format("%s/getJSON?geonameId=%s&username=%s", geonamesApiUrl, geonamesId, geonamesAccount))
+                    .execute()
+                    .returnContent()
+                    .asString();
+            respJson = new ObjectMapper().readTree(geonamesJSON);
+            geonamesCache.put(geonamesId, respJson);
+        }
         return respJson;
     }
 
@@ -277,9 +283,9 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         this.editMode = "all";
     }
 
-    public void saveAndExit() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
+    public String saveAndExit() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
         save();
-        finish();
+        return finish();
     }
 
     public void save() throws SwapException, DAOException, IOException, InterruptedException, JDOMException {
