@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -108,7 +109,7 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
     private List<NEREntry> searchResults;
     private Map<String, Set<String>> pageToDeletedEntriesMap = new HashMap<>();
 
-    private Map<String, JsonNode> geonamesCache = new HashMap<>();
+    private Map<String, JsonNode> geonamesCache = new ConcurrentHashMap<>();
 
     @Override
     public void initialize(Step step, String returnPath) {
@@ -158,7 +159,7 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
         SAXBuilder sax = new SAXBuilder();
         Document doc = sax.build(p.toFile());
         List<Element> tags = tagXpath.evaluate(doc);
-        for (Element tag : tags) {
+        tags.parallelStream().forEach(tag -> {
             if ("LOCATION".equals(tag.getAttributeValue("TYPE"))) {
                 String id = tag.getAttributeValue("ID");
                 String doc_vocab = tag.getAttributeValue("LABEL");
@@ -169,16 +170,22 @@ public class GeonamescorrectionStepPlugin implements IStepPluginVersion2 {
                 String lat = null;
                 String lng = null;
                 if (geonames_uri != null) {
-                    JsonNode geonamesJson = requestGeonames(geonames_uri);
-                    geonames_vocab = geonamesJson.get("name").asText();
-                    lat = geonamesJson.get("lat").asText();
-                    lng = geonamesJson.get("lng").asText();
+                    JsonNode geonamesJson;
+                    try {
+                        geonamesJson = requestGeonames(geonames_uri);
+                        geonames_vocab = geonamesJson.get("name").asText();
+                        lat = geonamesJson.get("lat").asText();
+                        lng = geonamesJson.get("lng").asText();
+                    } catch (IOException e) {
+                        log.error(e);
+                    }
                 }
                 NEREntry entry = new NEREntry(id, pageName, title, doc_vocab, text_snippet, geonames_uri,
                         geonames_feature_code, geonames_vocab, lat, lng, false);
                 foundEntries.add(entry);
             }
-        }
+
+        });
         return foundEntries;
     }
 
