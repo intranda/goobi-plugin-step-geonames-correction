@@ -12,10 +12,12 @@
         <project>*</project>
         <step>*</step>
         
-        <!-- sample parameter -->
-        <value>test</value>
         <!-- display button to finish the task directly from within the entered plugin -->
         <allowTaskFinishButtons>true</allowTaskFinishButtons>
+        <!-- geonames account -->
+        <geonamesAccount>testuser</geonamesAccount>
+        <!-- geonames API URL - if you have a paid plan, use http://ws.geonames.net here -->
+        <geonamesApiUrl>http://api.geonames.org</geonamesApiUrl>
     </config>
 
 </config_plugin>
