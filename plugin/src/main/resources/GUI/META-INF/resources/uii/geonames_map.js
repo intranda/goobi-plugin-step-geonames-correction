@@ -4,7 +4,7 @@ function drawGeonamesMap() {
 	window.goobiGeonamesMap = L.map('geonamesMap');
 	window.markerLayerGroup = L.layerGroup();
 	goobiGeonamesMap.addLayer(markerLayerGroup);
-	L.tileLayer( 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	L.tileLayer( 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 	    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 	    subdomains: ['a','b','c']
 	}).addTo( goobiGeonamesMap );
