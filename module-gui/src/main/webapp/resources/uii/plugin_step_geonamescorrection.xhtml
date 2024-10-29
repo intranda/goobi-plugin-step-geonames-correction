@@ -1,38 +1,50 @@
-<!-- 
+<!--
  * This file is part of a plugin for Goobi - a Workflow tool for the support of mass digitization.
- * 
- * Visit the websites for more information. 
+ *
+ * Visit the websites for more information.
  *          - https://goobi.io
  *          - https://www.intranda.com
  *          - https://github.com/intranda/goobi
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA
- * 
+ *
  -->
-<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:jsf="http://xmlns.jcp.org/jsf" xmlns:o="http://omnifaces.org/ui" xmlns:of="http://omnifaces.org/functions" template="/uii/template/template.html" xmlns:x="http://myfaces.apache.org/tomahawk" xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites">
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:c="http://java.sun.com/jsp/jstl/core"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:jsf="http://xmlns.jcp.org/jsf"
+    xmlns:o="http://omnifaces.org/ui"
+    xmlns:of="http://omnifaces.org/functions"
+    template="/uii/templatePG/templatePG.html"
+    xmlns:intranda="http://xmlns.jcp.org/jsf/composite/compositesPG"
+    xmlns:section="http://goobi.io/section"
+    xmlns:table="http://goobi.io/table">
 
     <ui:param name="myPageTitle" value="#{msgs.plugin}: #{msgs[('plugin_').concat(AktuelleSchritteForm.myPlugin.title)]}" />
 
 	<ui:define name="breadcrumb">
         <intranda:breadcrumb label="#{msgs.startseite}" action="index" navId="a0" />
-        
+
         <c:if test="#{LoginForm.hasRole('Workflow_Processes') and NavigationForm.uiStatus.pluginSimulation == true}">
 			<intranda:breadcrumb id="processAll" label="#{ProzessverwaltungForm.modusAnzeige=='aktuell'?msgs.aktuelleProzesse:msgs.prozessvorlagen}" action="process_all" navId="a1" />
 			<intranda:breadcrumb id="processEdit" label="#{ProzessverwaltungForm.modusAnzeige=='aktuell'?msgs.prozessDetails:msgs.process_templateDetails}" action="process_edit" />
 		</c:if>
-        
+
         <c:if test="#{NavigationForm.uiStatus.pluginSimulation != true}">
 		    <intranda:breadcrumb label="#{msgs.aktuelleSchritte}" action="#{AktuelleSchritteForm.paginator.returnToPreviousPage}" />
     	   	<intranda:breadcrumb label="#{AktuelleSchritteForm.mySchritt.prozess.titel}" action="#{AktuelleSchritteForm.myPlugin.cancel}" />
 		</c:if>
-        
+
         <intranda:breadcrumb label="#{myPageTitle}" noSeparator="#{true}" />
     </ui:define>
 
@@ -55,182 +67,240 @@
             #mapCol {
                 min-height: 100vh;
             }
-            #saveActions {
-                margin-top: 20px;
-            }
             tr.changed {
                 color: #ccc;
             }
         </style>
-            <div class="box box-color lightgrey box-bordered">
-                <div class="box-title">
-                    <h3>
-                        <i class="fa fa-puzzle-piece" />
-                        <h:outputText id="id9a" value="#{AktuelleSchritteForm.myPlugin.step.titel}" />
-                    </h3>
+        <section:section type="neutral">
+            <section:header
+                icon="puzzle-piece"
+                title="#{msgs[('plugin_').concat(AktuelleSchritteForm.myPlugin.title)]}">
+                <section:header-actions>
+                    <button
+                        jsf:id="id10"
+                        jsf:action="#{NavigationForm.Reload}"
+                        class="btn d-flex align-items-center btn--title-action">
+                        <span
+                            aria-hidden="true"
+                            class="fa fa-refresh" />
+                    </button>
+                    <button
+                        jsf:id="id11"
+                        jsf:action="#{AktuelleSchritteForm.SchrittDurchBenutzerAbschliessen}"
+                        class="btn d-flex align-items-center btn--title-action"
+                        jsf:rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}"
+                        title="#{msgs.task_leavePluginAndFinishTask}"
+                        data-bs-toggle="tooltip">
+                        <span
+                            aria-hidden="true"
+                            class="fa fa-check" />
+                        <f:setPropertyActionListener target="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
+                    </button>
+                    <button
+                        jsf:id="id12"
+                        jsf:action="#{AktuelleSchritteForm.myPlugin.cancel}"
+                        class="btn d-flex align-items-center btn--title-action"
+                        jsf:rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}"
+                        title="#{msgs.pluginLeave}"
+                        data-bs-toggle="tooltip">
+                        <span
+                            aria-hidden="true"
+                            class="fa fa-close" />
+                        <f:setPropertyActionListener target="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
+                    </button>
+                </section:header-actions>
+            </section:header>
+            <section:body>
+                <div class="row">
+                    <div class="col-12 col-md-6" jsf:id="tableCol">
                         <h:form>
-                    <div class="actions">
-                    	<h:commandLink id="id10" action="#{NavigationForm.Reload}" styleClass="btn btn-mini">
-                            <i class="fa fa-refresh" />
-                        </h:commandLink>
-                        <h:commandLink id="id11" action="#{AktuelleSchritteForm.SchrittDurchBenutzerAbschliessen}" styleClass="btn btn-mini" 
-                        	rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}" title="#{msgs.task_leavePluginAndFinishTask}">
-                            <i class="fa fa-check" />
-                            <x:updateActionListener property="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
-                        </h:commandLink>
-                        
-                        <h:commandLink id="id12" action="#{AktuelleSchritteForm.myPlugin.cancel}" styleClass="btn btn-mini" 
-                        	rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}" title="#{msgs.pluginLeave}">
-                            <i class="fa fa-close" />
-                            <x:updateActionListener property="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
-                        </h:commandLink>
-                    </div>
-                        </h:form>
-                </div>
-
-                <div class="box-content">
-					
-					<h:panelGroup id="actionform" styleClass="col-sm-12">
-					      <div class="row">
-                            <div class="col-md-6" jsf:id="tableCol">
-					   <h:form>
-                                <table jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}" class="table table-hover table-bordered" id="geonamesTable">
-                                    <thead>
-                                    <tr>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
-                                        <th>#{msgs.auswahl}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <ui:repeat var="pageName" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap.keySet()}">
-                                        <ui:fragment rendered="#{not empty AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
-                                            <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
-                                                <tr onclick="zoomToRow(event)" class="#{tag.changed ? 'changed' : ''}">
+                            <div class="p-3">
+                                <table:wrapper
+                                    rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'all'}">
+                                    <table:table
+                                        id="geonamesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
+                                                <th>#{msgs.auswahl}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <ui:repeat var="pageName" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap.keySet()}">
+                                                <ui:fragment rendered="#{not empty AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
+                                                    <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.nerEntryMap[pageName]}">
+                                                        <tr onclick="zoomToRow(event)" class="#{tag.changed ? 'changed' : ''}">
+                                                            <td>#{tag.doc_vocab}</td>
+                                                            <td class="geonames-vocab">#{tag.geonames_vocab}</td>
+                                                            <td>#{tag.text_snippet}</td>
+                                                            <td class="lat">#{tag.lat}</td>
+                                                            <td class="lng">#{tag.lng}</td>
+                                                            <td>
+                                                                <div class="gw-table__actions__container">
+                                                                    <button
+                                                                        jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}"
+                                                                        class="btn btn-blank"
+                                                                        aria-label="edit"
+                                                                        title="#{msgs.bearbeiten}"
+                                                                        data-bs-toggle="tooltip">
+                                                                        <span
+                                                                            aria-hidden="true"
+                                                                            class="fa fa-pencil" />
+                                                                        <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
+                                                                        <f:setPropertyActionListener value="edit" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
+                                                                        <f:setPropertyActionListener value="#{tag.doc_vocab}" target="#{AktuelleSchritteForm.myPlugin.searchString}" />
+                                                                        <f:ajax render="@form" onevent="editOnEvent"/>
+                                                                    </button>
+                                                                    <button
+                                                                        jsf:id="deleteButton"
+                                                                        jsf:action="#{AktuelleSchritteForm.myPlugin.removeResult(tag)}"
+                                                                        class="btn btn-blank"
+                                                                        aria-label="delete"
+                                                                        title="#{msgs.loeschen}"
+                                                                        data-bs-toggle="tooltip">
+                                                                        <span
+                                                                            aria-hidden="true"
+                                                                            class="fa fa-trash" />
+                                                                        <f:ajax render="@form" onevent="deleteOnEvent" />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </ui:repeat>
+                                                </ui:fragment>
+                                            </ui:repeat>
+                                        </tbody>
+                                    </table:table>
+                                </table:wrapper>
+                            </div>
+                            <div>
+                            <!-- <div jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'edit'}"> -->
+                                <div class="px-3 d-flex justify-content-between">
+                                    <h3 class="h6">#{msgs.bearbeiten}: #{AktuelleSchritteForm.myPlugin.searchString}</h3>
+                                    <div>
+                                        <button
+                                            jsf:action="#{AktuelleSchritteForm.myPlugin.cancelEdit}"
+                                            class="btn btn-blank">
+                                            #{msgs.cancel}
+                                            <f:ajax render="@form"/>
+                                        </button>
+                                    </div>
+                                </div>
+                                <table:wrapper>
+                                    <table:search>
+                                        <table:filter>
+                                            <table:filter-input>
+                                                <div class="search-form">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">
+                                                            <span
+                                                                aria-hidden="true"
+                                                                class="fa fa-search" />
+                                                            <label class="visually-hidden">
+                                                                #{msgs.suchbegriff}
+                                                            </label>
+                                                        </span>
+                                                        <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
+                                                        <button
+                                                            jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}"
+                                                            class="btn btn-blank">
+                                                            #{msgs.search}
+                                                            <f:ajax execute="@form" render="@form" onevent="deleteOnEvent"/>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </table:filter-input>
+                                        </table:filter>
+                                    </table:search>
+                                    <table:table id="searchResultsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
+                                                <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
+                                                <th>#{msgs.auswahl}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.searchResults}">
+                                                <tr onclick="zoomToRow(event)">
                                                     <td>#{tag.doc_vocab}</td>
                                                     <td class="geonames-vocab">#{tag.geonames_vocab}</td>
                                                     <td>#{tag.text_snippet}</td>
                                                     <td class="lat">#{tag.lat}</td>
                                                     <td class="lng">#{tag.lng}</td>
-                                                    <td style="min-width: 85px;">
-                                                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn" aria-label="edit" style="margin-right: 5px;" title="#{msgs.bearbeiten}">
-                                                            <i class="fa fa-pencil"></i>
-                                                            <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
-                                                            <f:setPropertyActionListener value="edit" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
-                                                            <f:setPropertyActionListener value="#{tag.doc_vocab}" target="#{AktuelleSchritteForm.myPlugin.searchString}" />
-                                                            <f:ajax render="@form" onevent="editOnEvent"/>
-                                                        </button>
-                                                        <button jsf:id="deleteButton" jsf:action="#{AktuelleSchritteForm.myPlugin.removeResult(tag)}" class="btn" aria-label="delete" title="#{msgs.loeschen}">
-                                                            <i class="fa fa-trash"></i>
-                                                            <f:ajax render="@form" onevent="deleteOnEvent" />
-                                                        </button>
+                                                    <td>
+                                                        <div class="gw-table__actions__container">
+                                                            <button
+                                                                jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResult(tag)}"
+                                                                class="btn btn-blank"
+                                                                data-bs-toggle="tooltip"
+                                                                title="#{msgs.overwrite}">
+                                                                <span
+                                                                    aria-hidden="true"
+                                                                    class="fa fa-check" />
+                                                            </button>
+                                                            <button
+                                                                jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResultForAll(tag)}"
+                                                                class="btn btn-blank"
+                                                                data-bs-toggle="tooltip"
+                                                                title="#{msgs.plugin_intranda_step_geonamescorrection_applyToAll}">
+                                                                <span
+                                                                    aria-hidden="true"
+                                                                    class="fa fa-check" style="margin-left: -6px" />
+                                                                <span
+                                                                    aria-hidden="true"
+                                                                    class="fa fa-check" style="margin-left: -5px; margin-right: -6px" />
+                                                            </button>
+                                                        </div>
                                                     </td>
-                                                </tr>                                                
+                                                </tr>
                                             </ui:repeat>
-                                        </ui:fragment>
-                                    </ui:repeat>
-                                    </tbody>
-                                </table>
-                                <div jsf:rendered="#{AktuelleSchritteForm.myPlugin.editMode eq 'edit'}">
-                                    <h4>#{msgs.bearbeiten}: #{AktuelleSchritteForm.myPlugin.searchString}</h4>
-                                    <div class="form-group">
-                                        <label>#{msgs.suchbegriff}</label>
-                                        <h:inputText styleClass="form-control" value="#{AktuelleSchritteForm.myPlugin.searchString}" />
-                                    </div>
-                                    <div>
-                                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.searchGeonames}" class="btn btn-default pull-right">#{msgs.search}
-                                            <f:ajax execute="@form" render="@form" onevent="deleteOnEvent"/>
-                                        </button>
-                                        <button jsf:action="#{AktuelleSchritteForm.myPlugin.cancelEdit}" class="btn btn-default">#{msgs.cancel}
-                                            <f:ajax render="@form"/>
-                                        </button>
-                                    </div>
-                                    <hr />
-                                    <table class="table table-hover table-bordered" id="searchResultsTable">
-                                    <thead>
-                                    <tr>
-                                    <th>#{msgs.plugin_intranda_step_geonamescorrection_term}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_geonamesname}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_phrase}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lat}</th>
-                                        <th>#{msgs.plugin_intranda_step_geonamescorrection_lng}</th>
-                                        <th>#{msgs.auswahl}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                        <ui:repeat var="tag" value="#{AktuelleSchritteForm.myPlugin.searchResults}">
-                                            <tr onclick="zoomToRow(event)">
-                                                <td>#{tag.doc_vocab}</td>
-                                                <td class="geonames-vocab">#{tag.geonames_vocab}</td>
-                                                <td>#{tag.text_snippet}</td>
-                                                <td class="lat">#{tag.lat}</td>
-                                                <td class="lng">#{tag.lng}</td>
-                                                <td style="min-width: 85px;">
-                                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResult(tag)}" class="btn" style="margin-right: 5px;" title="#{msgs.overwrite}">
-                                                        <i class="fa fa-check"></i>
-                                                    </button>
-                                                    <button jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResultForAll(tag)}" class="btn" title="#{msgs.plugin_intranda_step_geonamescorrection_applyToAll}">
-                                                        <i class="fa fa-check" style="margin-left: -6px"></i>
-                                                        <i class="fa fa-check" style="margin-left: -5px; margin-right: -6px"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>                                                
-                                        </ui:repeat>
-                                    </tbody>
-                                </table>
-                                </div>
-						</h:form>
+                                        </tbody>
+                                    </table:table>
+                                </table:wrapper>
                             </div>
-                            <div class="col-md-6" id="mapCol">
-                                <div id="genonamesMapContainer">
-                                    <div id="geonamesMap"></div>
-                                    <div id="saveActions">
-                                        <h:form>
-                                        <div class="pull-right">
-                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.cancel}" class="btn btn-lightgrey" style="margin-right: 5px;">
-                                                #{msgs.cancel}
-                                            </button>
-                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.save}" class="btn btn-green" style="margin-right: 5px;">
-                                                <i class="fa fa-floppy-o"></i>
-                                                #{msgs.save}
-                                            </button>
-                                            <button jsf:action="#{AktuelleSchritteForm.myPlugin.saveAndExit}" class="btn btn-green">
-                                                <i class="fa fa-floppy-o"></i>
-                                                #{msgs.plugin_codicological_saveAndExit}
-                                            </button>
-                                        </div>
-                                        </h:form>
-                                        <div class="clearfix"></div>
-                                    </div>
-                                </div>
-                            </div>
-                          </div>
-					</h:panelGroup>
-					
+                        </h:form>
+                    </div>
+                    <div class="col-12 col-md-6 p-3" id="mapCol">
+                        <div id="genonamesMapContainer">
+                            <div id="geonamesMap"></div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="form-actions">
-
-                    <!-- Save and finish the task -->
-					<h:commandLink styleClass="btn btn-green font-size-s" id="finishAndClose" rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}" action="#{AktuelleSchritteForm.SchrittDurchBenutzerAbschliessen}">
-                        <i class="fa fa-check margin-right-5"></i>
-                        <h:outputText value="#{msgs.task_leavePluginAndFinishTask}" />
-                        <x:updateActionListener property="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
-                    </h:commandLink>
-                     
-                    <!-- Save -->
-                    <h:commandLink styleClass="btn btn-lightgrey pull-right font-size-s" id="absenden" action="#{AktuelleSchritteForm.myPlugin.cancel}">
-                        <i class="fa fa-close margin-right-5"></i>
-                        <h:outputText value="#{msgs.pluginLeave}" />
-                        <x:updateActionListener property="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
-                    </h:commandLink>
-
-                </div>
-
-            </div>
+            </section:body>
+            <h:form>
+                <section:footer>
+                    <button
+                        jsf:action="#{AktuelleSchritteForm.myPlugin.cancel}"
+                        class="btn btn-blank">
+                        #{msgs.cancel}
+                    </button>
+                    <button
+                        jsf:action="#{AktuelleSchritteForm.myPlugin.save}"
+                        class="btn btn-blank">
+                        <span
+                            aria-hidden="true"
+                            class="fa fa-floppy-o" />
+                        #{msgs.save}
+                    </button>
+                    <button
+                        jsf:action="#{AktuelleSchritteForm.myPlugin.saveAndExit}"
+                        class="btn btn-success">
+                        <span
+                            aria-hidden="true"
+                            class="fa fa-floppy-o" />
+                        #{msgs.plugin_codicological_saveAndExit}
+                    </button>
+                </section:footer>
+            </h:form>
+        </section:section>
 
 
         <script src="leaflet/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="></script>
@@ -244,7 +314,6 @@
         	function fixHeights() {
         		var height = document.querySelector('#tableCol').offsetHeight;
         		height = Math.max(window.innerHeight, height);
-        		console.log(height)
         		document.querySelector('#mapCol').style.height = height + "px";
         	}
         	function deleteOnEvent(event) {
