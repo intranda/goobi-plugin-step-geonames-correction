@@ -3,6 +3,10 @@ title: GeoNames Correction
 identifier: intranda_step_geonamescorrection
 published: true
 description: Goobi Step Plugin for annotating and correcting previously created GeoNames identifiers in ALTO OCR results.
+keywords:
+    - Goobi workflow
+    - Plugin
+    - Step Plugin
 ---
 ## Introduction
 This Step Plugin for Goobi workflow allows the annotation with - respectively correction of - previously automatically created GeoNames identifiers in ALTO OCR results. For this purpose, the NER results annotated within ALTO with the type 'location' are displayed in a table. If automatically generated GeoNames identifiers are already present in the ALTO file, they are visualised on a map.
