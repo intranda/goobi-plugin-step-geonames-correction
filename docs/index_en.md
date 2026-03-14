@@ -13,7 +13,7 @@ This Step Plugin for Goobi workflow allows the annotation with - respectively co
 
 
 ## Installation
-Das Plugin besteht aus folgenden Dateien:
+The plugin consists of the following files:
 
 ```bash
 goobi_plugin_step_geonamescorrection-base.jar
@@ -57,7 +57,7 @@ By clicking on `Save` or `Save and exit` at the bottom right, the adapted GeoNam
 
 
 ## Configuration
-The configuration of the plug-in is done via the configuration file `plugin_intranda_step_ark.xml` and can be adjusted during operation. The following is an example configuration file:
+The configuration of the plug-in is done via the configuration file `plugin_intranda_step_geonamescorrection.xml` and can be adjusted during operation. The following is an example configuration file:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -71,7 +71,7 @@ The configuration of the plug-in is done via the configuration file `plugin_intr
 	-->
 
     <config>
-        <!-- which projects to use for (can be more then one, otherwise use *) -->
+        <!-- which projects to use for (can be more than one, otherwise use *) -->
         <project>*</project>
         <step>*</step>
 
