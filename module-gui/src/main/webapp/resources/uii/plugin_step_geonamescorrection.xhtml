@@ -28,7 +28,8 @@
     template="/uii/template/template.html"
     xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites"
     xmlns:section="http://goobi.io/section"
-    xmlns:table="http://goobi.io/table">
+    xmlns:table="http://goobi.io/table"
+    xmlns:util="http://goobi.io/util">
 
     <ui:param name="myPageTitle" value="#{msgs.plugin}: #{msgs[('plugin_').concat(AktuelleSchritteForm.myPlugin.title)]}" />
 
@@ -73,16 +74,14 @@
         </style>
         <section:section type="neutral">
             <section:header
-                icon="puzzle-piece"
+                icon="puzzle"
                 title="#{msgs[('plugin_').concat(AktuelleSchritteForm.myPlugin.title)]}">
                 <section:header-actions>
                     <button
                         jsf:id="id10"
                         jsf:action="#{NavigationForm.Reload}"
                         class="btn d-flex align-items-center btn--title-action">
-                        <span
-                            aria-hidden="true"
-                            class="fa fa-refresh" />
+                        <util:icon icon="refresh" />
                     </button>
                     <button
                         jsf:id="id11"
@@ -91,9 +90,7 @@
                         jsf:rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}"
                         title="#{msgs.task_leavePluginAndFinishTask}"
                         data-bs-toggle="tooltip">
-                        <span
-                            aria-hidden="true"
-                            class="fa fa-check" />
+                        <util:icon icon="check" />
                         <f:setPropertyActionListener target="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
                     </button>
                     <button
@@ -103,9 +100,7 @@
                         jsf:rendered="#{NavigationForm.uiStatus.pluginSimulation != true and AktuelleSchritteForm.myPlugin.allowTaskFinishButtons == true}"
                         title="#{msgs.pluginLeave}"
                         data-bs-toggle="tooltip">
-                        <span
-                            aria-hidden="true"
-                            class="fa fa-close" />
+                        <util:icon icon="x" />
                         <f:setPropertyActionListener target="#{NavigationForm.uiStatus.pluginSimulation}" value="#{false}" />
                     </button>
                 </section:header-actions>
@@ -147,9 +142,7 @@
                                                                         aria-label="edit"
                                                                         title="#{msgs.bearbeiten}"
                                                                         data-bs-toggle="tooltip">
-                                                                        <span
-                                                                            aria-hidden="true"
-                                                                            class="fa fa-pencil" />
+                                                                        <util:icon icon="pencil" />
                                                                         <f:setPropertyActionListener value="#{tag}" target="#{AktuelleSchritteForm.myPlugin.editEntry}" />
                                                                         <f:setPropertyActionListener value="edit" target="#{AktuelleSchritteForm.myPlugin.editMode}" />
                                                                         <f:setPropertyActionListener value="#{tag.doc_vocab}" target="#{AktuelleSchritteForm.myPlugin.searchString}" />
@@ -162,9 +155,7 @@
                                                                         aria-label="delete"
                                                                         title="#{msgs.loeschen}"
                                                                         data-bs-toggle="tooltip">
-                                                                        <span
-                                                                            aria-hidden="true"
-                                                                            class="fa fa-trash" />
+                                                                        <util:icon icon="trash" />
                                                                         <f:ajax render="@form" onevent="deleteOnEvent" />
                                                                     </button>
                                                                 </div>
@@ -197,9 +188,7 @@
                                                 <div class="search-form">
                                                     <div class="input-group">
                                                         <span class="input-group-text">
-                                                            <span
-                                                                aria-hidden="true"
-                                                                class="fa fa-search" />
+                                                            <util:icon icon="search" />
                                                             <label class="visually-hidden">
                                                                 #{msgs.suchbegriff}
                                                             </label>
@@ -242,21 +231,14 @@
                                                                 class="btn btn-blank"
                                                                 data-bs-toggle="tooltip"
                                                                 title="#{msgs.overwrite}">
-                                                                <span
-                                                                    aria-hidden="true"
-                                                                    class="fa fa-check" />
+                                                                <util:icon icon="check" />
                                                             </button>
                                                             <button
                                                                 jsf:action="#{AktuelleSchritteForm.myPlugin.acceptResultForAll(tag)}"
                                                                 class="btn btn-blank"
                                                                 data-bs-toggle="tooltip"
                                                                 title="#{msgs.plugin_intranda_step_geonamescorrection_applyToAll}">
-                                                                <span
-                                                                    aria-hidden="true"
-                                                                    class="fa fa-check" style="margin-left: -6px" />
-                                                                <span
-                                                                    aria-hidden="true"
-                                                                    class="fa fa-check" style="margin-left: -5px; margin-right: -6px" />
+                                                                <util:icon icon="check" double="true" />
                                                             </button>
                                                         </div>
                                                     </td>
