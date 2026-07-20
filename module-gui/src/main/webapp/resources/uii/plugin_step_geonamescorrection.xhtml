@@ -267,18 +267,12 @@
                     <button
                         jsf:action="#{AktuelleSchritteForm.myPlugin.save}"
                         class="btn btn-blank">
-                        <span
-                            aria-hidden="true"
-                            class="fa fa-floppy-o" />
-                        #{msgs.save}
+                        <util:icon-text icon="device-floppy" text="#{msgs.save}" />
                     </button>
                     <button
                         jsf:action="#{AktuelleSchritteForm.myPlugin.saveAndExit}"
                         class="btn btn-success">
-                        <span
-                            aria-hidden="true"
-                            class="fa fa-floppy-o" />
-                        #{msgs.plugin_codicological_saveAndExit}
+                        <util:icon-text icon="device-floppy" text="#{msgs.plugin_codicological_saveAndExit}" />
                     </button>
                 </section:footer>
             </h:form>
